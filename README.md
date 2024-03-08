@@ -5,6 +5,8 @@ This can be particularily useful in VDI enviroments where you move the sessions 
 _Nor is this tested on other types of VDI plattforms_  
 _It does however work fine direcly on regular clients (laptops, desktops)._
 
+Application is built with .Net 8 and meant to run on Windows OS only.
+
 ## Building
 This program has 2 main build versions/publish profiles. `AOTPublish` and `AOTPublish-hidden`.  
 AOT means the program is fully compiled ahead of time, and it should run on any newer Windows 10 64bit version without extra dependencies.  
