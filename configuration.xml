@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<printerconnector>
+	<!-- settings:
+	fix-missing-fqdn-names: Set to false (default true) will stop correcting names that are not fully qualified  
+	detailed-logging: Enables detailed logging (default false), this will log decisions on why a printer was added
+	-->
+	<configuration fix-missing-fqdn-names="false" detailed-logging="true" />
+	<printers>
+		<printerdef>
+			<name>\\printserver.example.com\commonprinter</name>
+		</printerdef>
+		<printerdef>
+			<name>\\printserver.example.com\conditiontest2</name>
+			<adgroup>domain\Domain Users</adgroup>
+		</printerdef>
+		<printerdef>
+			<name>\\printserver.example.com\conditiontest3</name>
+			<computers>computer1</computers>
+		</printerdef>
+		<printerdef>
+			<name>\\printserver.example.com\conditiontest4</name>
+			<adgroup>domain\Domain Users</adgroup>
+			<computers>computer1</computers>
+		</printerdef>
+		<printerdef>
+			<name>\\example.com\conditiontest4</name>
+			<adgroup>domain\Domain Users</adgroup>
+			<computers>computer1</computers>
+		</printerdef>
+		<printerdef>
+			<name>\\printserver.example.com\conditiontest5</name>
+			<adgroup>domain\Domain Users</adgroup>
+			<computers>computer1,computer2</computers>
+		</printerdef>
+		<printerdef>
+			<name>\\printserver.example.com\conditiontest6</name>
+			<adgroup>domain\Domain Users</adgroup>
+			<computers>computer2</computers>
+		</printerdef>
+		<printerdef>
+			<name>\\printserver.example.com\conditiontest7</name>
+			<adgroup>domain\noconnect</adgroup>
+		</printerdef>
+		<printerdef>
+			<name>\\printserver.example.com\conditiontest8</name>
+			<adgroup>domain\canconnect, domain\domain users</adgroup>
+			<ipaddress>10.226.63.12, 10.226.63.10, 10.226.63.11, 10.226.63.13</ipaddress>
+		</printerdef>
+		<printerdef>
+			<name>\\printserver.example.com\conditiontest9</name>
+			<computers>computer1, computer2, computer3, computer4</computers>
+			<ipaddress>10.0.154.0/23, 10.0.155.1-10.0.155.254,10.0.155.1/23</ipaddress>
+		</printerdef>
+		<printerdef>
+			<name>\\printserver.example.com\conditiontest10</name>
+			<computers>computer1, computer2, computer3, computer4</computers>
+			<ipaddress>10.0.0.55</ipaddress>
+		</printerdef>
+		<printerdef>
+			<name>\\nofqdn\conditiontest11</name>
+		</printerdef>
+	</printers>
+</printerconnector>
