@@ -1,5 +1,41 @@
 # PrinterConnector
-This application connects and disconnects shared printers based on a XML configuration file.
+This application connects and disconnects shared printers in a Windows enviroment based on a XML configuration file that define the printers.  
+This can be particularily useful in VDI enviroments where you move the sessions around and might have different printers available nearby.  
+>_Note that the design currently only accounts for single sessions (basically VDI) on the Citrix platform, terminal servers are not handled properly yet._  
+_Nor is this tested on other types of VDI plattforms_  
+_It does however work fine direcly on regular clients (laptops, desktops)._
+
+## Building
+This program has 2 main build versions/publish profiles. `AOTPublish` and `AOTPublish-hidden`.  
+AOT means the program is fully compiled ahead of time, and it should run on any newer Windows 10 64bit version without extra dependencies.  
+All that is needed for the program will be put in the "publish" folder for the build type.
+
+The main difference between AOT and AOT-hidden is that the hidden version will not show any window while running.  
+It will be running completely silently and you only notice it running from the Task Manager and the logfile.
+
+Currently the publish profiles works correctly from Visual Studio 2022. Build scripts that only needs the dotnet tools are on the todo list.
+
+## Running
+Simply double click to launch, it will by default be looking for `configuration.xml` in the current working directory.  
+Also have a look at [ScheduledTaskSample.ps1](ScheduledTaskSample.ps1) to how you could configure it to run as a scheduled task on login and workstation unlock.
+
+## Logging
+Currently logging path is not changeable. The program will try to write it's log to `C:\temp\printerlog.log`.  
+Failing that it will try to create it at `%TEMP%\printerlog.log`.  
+The logfile is replaced for each run.
+
+## Allowed servers and the AllowPrivateNetworkOnly flag
+At compile time we decide if we allow trying to connect to non-private IP-address spaces.  
+If this constant `AllowPrivateNetworkOnly` is set to `true` we do the following:
+After we do a server name lookup, check the returned IP-addresses:
+If the IP-address converted to string starts with:
+- 10.*
+- 172.16.*
+- 192.168.*
+- fd* (IPv6 private space prefix)
+
+Then we consider the DNS lookup valid. If the IP-address does not start with either of these, then we consider the DNS lookup as "failed".  
+The intention of this is to reduce the chance using this application as a means of connecting to a malicious printer server.
 
 ## Configuration
 The application is configured via the file `configuration.xml`.  
@@ -108,35 +144,11 @@ Both the `adgroup`, `computer` and `ipaddress` tags accept a comma (`,`) seperat
 </printerconnector>
 ```
 
-## Important
+### Important
 - Currently you can only have one `printerdef` per printername, if you add multiple entries with the same name only the fist will be used.  
 - The `adgroup`, `computer` and `ipaddress` defintions will also remove the printer if the user's session no longer match the conditions. 
 
-## Builds
-This program has 2 main build versions. AOT and AOT-hidden.  
-AOT means the program is fully compiled ahead of time, and it should run on any newer Windows 10 64bit version without extra dependencies.  
-All that is needed for the program will be put in the "publish" folder for the build type.
 
-The main difference between AOT and AOT-hidden is that the hidden version will not show any window while running.  
-It will be running completely silently and you only notice it running from the Task Manager and the logfile.
-
-## Logging
-Currently logging path is not changeable. The program will try to write it's log to `C:\temp\printerlog.log`.  
-Failing that it will try to create it at `%TEMP%\printerlog.log`.  
-The logfile is replaced for each run.
-
-## Allowed servers and the AllowPrivateNetworkOnly flag
-At compile time we decide if we allow trying to connect to non-private IP-address spaces.  
-If this constant `AllowPrivateNetworkOnly` is set to `true` we do the following:
-After we do a server name lookup, check the returned IP-addresses:
-If the IP-address converted to string starts with:
-- 10.*
-- 172.16.*
-- 192.168.*
-- fd* (IPv6 private space prefix)
-
-Then we consider the DNS lookup valid. If the IP-address does not start with either of these, then we consider the DNS lookup as "failed".  
-The intention of this is to reduce the chance of connecting to a malicious printer server.
 
 ## Copyright
 ```
