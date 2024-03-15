@@ -17,10 +17,12 @@ using System.Net;
 
 namespace PrinterConnector
 {
-    public class PrinterConnectDef(string printer, string[] adgroup, string[] computers, string[] ipaddress)
+    public class PrinterConnectDef(string printer, string[] adgroup, string[] computers, string[] ipaddress, bool SetDefaultPrinter, int DefaultPrinterWeight)
     {
         public readonly string Printer = printer.ToLowerInvariant();
         public readonly string PrinterServer = printer.ToLowerInvariant().TrimStart('\\').Split('\\')[0];
+        public readonly bool SetDefaultPrinter = SetDefaultPrinter;
+        public readonly int DefaultPrinterWeight = DefaultPrinterWeight;
         public readonly HashSet<string> Adgroup = adgroup.Select(s => s.ToLowerInvariant().Trim()).ToHashSet();
         public readonly HashSet<string> Computers = computers.Select(s => s.ToLowerInvariant().Trim()).ToHashSet();
         public readonly HashSet<IPAddress> IPAddresses = ProcessIPList(ipaddress);

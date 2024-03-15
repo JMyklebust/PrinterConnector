@@ -186,6 +186,20 @@ namespace PrinterConnector
                     Logger.TeeLogMessage($"printer already connected {printerName}");
                 }
             }
+
+            foreach (string printerDefault in PrinterList.printersToSetDefault) 
+            {
+                try
+                {
+                    CIMUtils.SetDefaultPrinter(printerDefault);
+                    Logger.TeeLogMessage($"set {printerDefault} as default printer");
+                    break;
+                }
+                catch
+                {
+                    Logger.TeeLogMessage($"failed to set {printerDefault} as default printer, trying next printer");
+                }
+            }
         }
 
         private static bool CheckValidHostname(string hostname)
@@ -217,7 +231,6 @@ namespace PrinterConnector
                 Logger.TeeLogMessage($"{hostname} resolves to a public IP and this is not allowed ({addr}).", Logging.LogSeverity.Warning);
                 return false;
             }
-            return true;
         }
     }
     public static class BuildTimeStamp

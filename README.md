@@ -46,7 +46,7 @@ The application is configured via the file `configuration.xml`.
 ### Simple configuration
 Printers are defined in the tag `<printers>` under the root tag `<printerconnector>` and a definition is defined by the element `<printerdef>` containg minimum a `<name>` element which defines the printer.
 An example of minimum configuration:
-```configuration.xml
+```xml
 <?xml version="1.0" encoding="utf-8" ?>
 <printerconnector>
 	<printers>
@@ -64,7 +64,7 @@ More advanced configuration is also possible.
 
 #### Group membership
 One can restrict mapping based on group membership:
-```configuration.xml
+```xml
 <?xml version="1.0" encoding="utf-8" ?>
 <printerconnector>
 	<printers>
@@ -78,7 +78,7 @@ One can restrict mapping based on group membership:
 
 #### Current computer/connected Citrix client hostname
 Restrict based on the hostname of the current computer (or in case of a Citrix VDI-session, the client that is used to connect):
-```configuration.xml
+```xml
 <?xml version="1.0" encoding="utf-8" ?>
 <printerconnector>
 	<printers>
@@ -92,7 +92,7 @@ Restrict based on the hostname of the current computer (or in case of a Citrix V
 
 #### Current IP/connected Citrix client IP
 It's also possible to use IP address as condition (same as with hostname, it will check the Citrix VDI-session details):
-```configuration.xml
+```xml
 <?xml version="1.0" encoding="utf-8" ?>
 <printerconnector>
 	<printers>
@@ -114,7 +114,7 @@ Use a subnet calculator, or use to from-to notation instead.
 
 #### Combination
 These can also be combined:
-```configuration.xml
+```xml
 <?xml version="1.0" encoding="utf-8" ?>
 <printerconnector>
 	<printers>
@@ -132,7 +132,7 @@ This also means that if neither of these match, the printer will be removed.
 
 #### Arrays in connection filters
 Both the `adgroup`, `computer` and `ipaddress` tags accept a comma (`,`) seperated list of items.
-```configuration.xml
+```xml
 <?xml version="1.0" encoding="utf-8" ?>
 <printerconnector>
 	<printers>
@@ -145,6 +145,24 @@ Both the `adgroup`, `computer` and `ipaddress` tags accept a comma (`,`) seperat
 	</printers>
 </printerconnector>
 ```
+
+#### Configure default printer
+You can define a printer to be set as default using the tag ``setdefaultprinter``.  
+```xml
+<printerconnector>
+	<printers>
+		<printerdef>
+			<name>\\printer.server.FQDN\myprinter</name>
+			<setdefaultprinter weight="1">true</setdefaultprinter>
+		</printerdef>
+	</printers>
+</printerconnector>
+```
+You can mark several printers as default printer, the criteria for selection is following:
+- The printer is evaluated as a printer to connect (according to other conditions).
+- Try to set the default printer in the order they appear in the config file, unless a weight is set specificially on any of them.
+- If the ``weight`` attribute is set, then try the higher numbers first (if no weight is set then they have a default weight of 0).
+- Try to set default printers in order until one succeeds.
 
 ### Important
 - Currently you can only have one `printerdef` per printername, if you add multiple entries with the same name only the fist will be used.  

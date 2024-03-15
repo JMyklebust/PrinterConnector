@@ -26,6 +26,7 @@ namespace PrinterConnector
         internal static readonly List<PrinterConnectDef> printers = [];
         internal static readonly List<PrinterConnectDef> printersToConnect = [];
         internal static readonly List<PrinterConnectDef> printersToRemove = [];
+        internal static readonly List<string> printersToSetDefault = new List<string>();
         internal static readonly HashSet<string> userGroups = GetUserGroups();
         internal static readonly string computerName = GetHostname();
         internal static readonly string computerDomain = CIMUtils.GetComputerDomain();
@@ -72,6 +73,8 @@ namespace PrinterConnector
                 foreach (XmlNode node in rootNode.SelectSingleNode(@"printers")!.ChildNodes)
                 {
                     string name = "undefined";
+                    bool setDefaultPrinter = false;
+                    int defaultPrinterWeight = 0;
                     try
                     {
                         if (node.LocalName == @"#comment")
@@ -79,6 +82,10 @@ namespace PrinterConnector
                             continue;
                         }
                         name = node.SelectSingleNode(@"name")!.InnerText;
+                        if(bool.TryParse(node.SelectSingleNode(@"setdefaultprinter")?.InnerText, out setDefaultPrinter))
+                        {
+                            _ = int.TryParse(node.SelectSingleNode(@"setdefaultprinter")?.Attributes.GetNamedItem("weight")?.InnerText, out defaultPrinterWeight);
+                        }
                         string[] adgroup = ProcessArrayList(node, @"adgroup");
                         string[] computers = ProcessArrayList(node, @"computers");
                         string[] ipaddress = ProcessArrayList(node, @"ipaddress");
@@ -90,13 +97,13 @@ namespace PrinterConnector
                             if (!name.Contains('.') && !string.IsNullOrWhiteSpace(computerDomain))
                             {
                                 // Add a an entry for the old name, this will be filtered away and end up on the remove list
-                                printers.Add(new(name, ["noconnect"], ["noconnect"], []));
+                                printers.Add(new(name, ["noconnect"], ["noconnect"], [], false, 0));
 
                                 string hostname = name.TrimStart('\\').Split('\\')[0];
                                 name = name.Replace(hostname, hostname + "." + computerDomain);
                             }
                         }
-                        printers.Add(new(name, adgroup, computers, ipaddress));
+                        printers.Add(new(name, adgroup, computers, ipaddress, setDefaultPrinter, defaultPrinterWeight));
                     }
                     catch
                     {
@@ -105,6 +112,7 @@ namespace PrinterConnector
                 }
             }
             PrepareConnectDisconnectLists();
+            DecideDefaultPrinter();
             return true;
         }
         private static string[] ProcessArrayList(XmlNode node, string nodeNameXpath)
@@ -181,6 +189,11 @@ namespace PrinterConnector
             printersToRemove.AddRange(printers.Where(printer => !printersToConnect.Contains(printer)).ToList());
         }
 
+        static void DecideDefaultPrinter()
+        {
+            PrinterConnectDef[] printersToSetAsDefault = printersToConnect.Where(printer => printer.SetDefaultPrinter).ToArray();
+            printersToSetDefault.AddRange(printersToSetAsDefault.OrderByDescending(printer => printer.DefaultPrinterWeight).Select(printer => printer.Printer).ToList());
+        }
         // If we are running in a Citrix VDI we want the remote computer otherwise we simply want the local hostname.
         // Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Citrix\Ica\Session\
         // ClientAddress - IpAddress

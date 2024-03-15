@@ -10,6 +10,14 @@
 			<name>\\printserver.example.com\commonprinter</name>
 		</printerdef>
 		<printerdef>
+			<name>\\printserver.example.com\commonprinter_default_noweight</name>
+			<setdefaultprinter>true</setdefaultprinter>
+		</printerdef>
+		<printerdef>
+			<name>\\printserver.example.com\commonprinter_default</name>
+			<setdefaultprinter weight="1">true</setdefaultprinter>
+		</printerdef>
+		<printerdef>
 			<name>\\printserver.example.com\conditiontest2</name>
 			<adgroup>domain\Domain Users</adgroup>
 		</printerdef>
