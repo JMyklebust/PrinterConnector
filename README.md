@@ -8,14 +8,16 @@ _It does however work fine direcly on regular clients (laptops, desktops)._
 Application is built with .Net 8 and meant to run on Windows OS only.
 
 ## Building
-This program has 2 main build versions/publish profiles. `AOTPublish` and `AOTPublish-hidden`.  
-AOT means the program is fully compiled ahead of time, and it should run on any newer Windows 10 64bit version without extra dependencies.  
-All that is needed for the program will be put in the "publish" folder for the build type.
+Simple build script can be found at [build.bat](build.bat).  
+To build this application you need the .Net 8.0 SDK [Dotnet 8.0 Downloads](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).  
 
-The main difference between AOT and AOT-hidden is that the hidden version will not show any window while running.  
-It will be running completely silently and you only notice it running from the Task Manager and the logfile.
+### Build commands
+To do a normal build just do:  
+``dotnet publish -c Release -r win-x64 --self-contained true -p:PublishDir=.\bin\Release\publish``
+If you want a version that does not open a console window everytime the program runs you can compile with with ``-p:TargetType=WinExe``:  
+``dotnet publish -c Release -r win-x64 --self-contained true -p:PublishDir=.\bin\Release\publish-hidden -p:TargetType=WinExe``
 
-Currently the publish profiles works correctly from Visual Studio 2022. Build scripts that only needs the dotnet tools are on the todo list.
+The "hidden" version is convenient to run as part of a scheduled task, this way the program can work in the background without showing up for the user.
 
 ## Running
 Simply double click to launch, it will by default be looking for `configuration.xml` in the current working directory.  
