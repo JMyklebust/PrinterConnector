@@ -13,7 +13,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-using System.Reflection;
 using System.Net;
 using System.Net.Sockets;
 
@@ -60,9 +59,9 @@ namespace PrinterConnector
             string? SettingsPath = null;
             if (args.Length > 0)
                 SettingsPath = args[0];
-
+            var compileTime = new DateTime(Builtin.CompileTime, DateTimeKind.Utc);
             Logger.TeeLogMessage("PrinterConnector, Copyright (C) 2024 Jens-Kristian Myklebust");
-            Logger.TeeLogMessage("Build time: " + BuildTimeStamp.GetTimestamp());
+            Logger.TeeLogMessage("Build time: " + compileTime.ToString("O"));
             // Ignore warnings for unreacable code here
             // This is intended depending on the state of AllowPrivateNetworkOnly
 #pragma warning disable CS0162 // Unreachable code detected
@@ -159,7 +158,7 @@ namespace PrinterConnector
                 {
                     Logger.TeeLogMessage($"match to add {printerName}");
                     uint returnCode = CIMUtils.ConnectPrinter(printerName);
-                    int readyStatus = -1;
+                    ushort readyStatus = 0;
                     int retryCount = 10;
                     if (returnCode == 1722)
                     {
@@ -170,7 +169,7 @@ namespace PrinterConnector
                         do
                         {
                             Thread.Sleep(1000);
-                            readyStatus = (int)CIMUtils.GetPrinterExtendedStatus(printerName);
+                            readyStatus = CIMUtils.GetPrinterExtendedStatus(printerName);
                             retryCount++;
                         } while ((readyStatus != 3 || readyStatus != 4) && retryCount < 10);
 
@@ -231,17 +230,6 @@ namespace PrinterConnector
                 Logger.TeeLogMessage($"{hostname} resolves to a public IP and this is not allowed ({addr}).", Logging.LogSeverity.Warning);
                 return false;
             }
-        }
-    }
-    public static class BuildTimeStamp
-    {
-        public static string GetTimestamp()
-        {
-            var assembly = Assembly.GetEntryAssembly();
-            var stream = (assembly?.GetManifestResourceStream("PrinterConnector.BuildTimeStamp.txt")) ?? throw new Exception("Unable to get build timestamp");
-            using var reader = new StreamReader(stream);
-            var timestamp = reader.ReadToEnd();
-            return timestamp.Trim();
         }
     }
 }

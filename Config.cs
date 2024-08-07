@@ -26,7 +26,7 @@ namespace PrinterConnector
         internal static readonly List<PrinterConnectDef> printers = [];
         internal static readonly List<PrinterConnectDef> printersToConnect = [];
         internal static readonly List<PrinterConnectDef> printersToRemove = [];
-        internal static readonly List<string> printersToSetDefault = new List<string>();
+        internal static readonly List<string> printersToSetDefault = [];
         internal static readonly HashSet<string> userGroups = GetUserGroups();
         internal static readonly string computerName = GetHostname();
         internal static readonly string computerDomain = CIMUtils.GetComputerDomain();

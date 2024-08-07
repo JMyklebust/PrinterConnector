@@ -13,34 +13,27 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-using Microsoft.Management.Infrastructure;
+using WmiLight;
 
 namespace PrinterConnector
 {
     //https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-printer
     internal sealed class CIMUtils
     {
-        const string cimNamespace = @"root\cimv2";
-        private static readonly CimSession cimSession = CimSession.Create(null);
+        private static readonly WmiConnection wmiConnection = new();
 
-        internal static uint ConnectPrinter(string printerName)
+        internal static WmiObject? GetPrinterInfo(string printerName)
         {
-            CimMethodResult result = cimSession.InvokeMethod(cimNamespace, "Win32_Printer", "AddPrinterConnection",
-            [
-                CimMethodParameter.Create("Name", printerName, CimFlags.None)
-            ]);
-            return (uint)result.ReturnValue.Value;
-        }
-        
-        internal static CimInstance GetPrinterInfo(string printerName)
-        {
-            CimInstance printer = cimSession.QueryInstances(cimNamespace, "WQL", $"Select * From Win32_Printer Where name LIKE \"{printerName.Replace(@"\", @"\\")}\"").First();
-            return printer;
+            foreach(WmiObject printer in wmiConnection.CreateQuery($"Select * From Win32_Printer Where name LIKE \"{printerName.Replace(@"\", @"\\")}\""))
+            {
+                return printer;
+            }
+            return null;
         }
 
-        internal static uint GetPrinterExtendedStatus(string printerName)
+        internal static ushort GetPrinterExtendedStatus(string printerName)
         {
-            return uint.Parse(s: GetPrinterInfo(printerName).CimInstanceProperties["PrinterStatus"].Value.ToString());
+            return (GetPrinterInfo(printerName)?.GetPropertyValue<ushort>("PrinterStatus")) ?? 0;
         }
 
         internal static string PrinterConnectReturnCodeTranslate(uint returnCode)
@@ -61,13 +54,11 @@ namespace PrinterConnector
         internal static HashSet<string> GetConnectedPrinters()
         {
             HashSet<string> connectedPrinters = [];
-            foreach (CimInstance printer in cimSession.EnumerateInstances(cimNamespace, "Win32_Printer"))
+            foreach (WmiObject printer in wmiConnection.CreateQuery($"Select Name,Shared,Local From Win32_Printer"))
             {
-                var properties = printer.CimInstanceProperties;
-
-                string? name = properties["Name"].Value.ToString();
-                bool shared = (bool)properties["Shared"].Value;
-                bool local = (bool)properties["Local"].Value;
+                string name = printer.GetPropertyValue<string>("Name");
+                bool shared = printer.GetPropertyValue<bool>("Shared");
+                bool local = printer.GetPropertyValue<bool>("Local");
                 if (shared && !local && name != null)
                 {
                     _ = connectedPrinters.Add(name.ToLowerInvariant());
@@ -76,26 +67,41 @@ namespace PrinterConnector
             return connectedPrinters;
         }
 
+        internal static uint ConnectPrinter(string printerName)
+        {
+            using WmiMethod AddPrinterConnection = wmiConnection.GetMethod("Win32_Printer", "AddPrinterConnection");
+            using WmiMethodParameters methodParameters = AddPrinterConnection.CreateInParameters();
+            methodParameters.SetPropertyValue("Name", printerName);
+            return wmiConnection.ExecuteMethod<uint>(AddPrinterConnection, methodParameters, out WmiMethodParameters outParameters);
+        }
+
         internal static void RemovePrinter(string printerName)
         {
-            var printer = cimSession.QueryInstances(cimNamespace, "WQL", $"Select * From Win32_Printer Where name LIKE \"{printerName.Replace(@"\",@"\\")}\"").First();
-            cimSession.DeleteInstance(printer);
+            foreach (WmiObject printer in wmiConnection.CreateQuery($"Select * From Win32_Printer Where name LIKE \"{printerName.Replace(@"\", @"\\")}\""))
+            {
+                wmiConnection.DeleteInstance(printer);
+            }
         }
 
         internal static void SetDefaultPrinter(string printerName)
         {
-            var printer = cimSession.QueryInstances(cimNamespace, "WQL", $"Select * From Win32_Printer Where name LIKE \"{printerName.Replace(@"\", @"\\")}\"").First();
-            cimSession.InvokeMethod(printer, "SetDefaultPrinter",[]);
+            var printer = GetPrinterInfo(printerName);
+            if(null != printer)
+            {
+                using WmiMethod SetDefaultPrinter = wmiConnection.GetMethod("Win32_Printer", "SetDefaultPrinter");
+                wmiConnection.ExecuteMethod(SetDefaultPrinter, printer, out WmiMethodParameters outParameters);
+            }
         }
 
         internal static string GetComputerDomain()
         {
-            string? computerDomain = cimSession.QueryInstances(cimNamespace, "WQL", "Select domain from Win32_ComputerSystem")
-                .FirstOrDefault()?.CimInstanceProperties["domain"].Value.ToString();
-
-            if (string.IsNullOrEmpty(computerDomain))
-                return "";
-
+            string? computerDomain = null;
+            foreach (WmiObject system in wmiConnection.CreateQuery("Select domain from Win32_ComputerSystem"))
+            {
+                computerDomain = system.GetPropertyValue<string>("domain");
+                break;
+            }
+            computerDomain ??= string.Empty;
             return computerDomain;
         }
     }

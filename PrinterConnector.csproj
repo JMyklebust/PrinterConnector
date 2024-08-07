@@ -4,10 +4,6 @@
     <TargetFramework>net8.0-windows10.0.17763.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <InvariantGlobalization>true</InvariantGlobalization>
-    <Today>$([System.DateTime]::Now.ToString("s"))</Today>
-    <SourceRevisionId>$([System.DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"))</SourceRevisionId>
-    <PublishAot>True</PublishAot>
     <Copyright>Copyright (C) 2024 Jens-Kristian Myklebust</Copyright>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/JMyklebust/PrinterConnector</PackageProjectUrl>
@@ -16,6 +12,8 @@
     <RepositoryType>git</RepositoryType>
     <Title>PrinterConnector</Title>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PublishAot>true</PublishAot>
+    <PublishWmiLightStaticallyLinked>true</PublishWmiLightStaticallyLinked>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DebugType>none</DebugType>
@@ -24,14 +22,7 @@
     <DebugType>none</DebugType>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Management.Infrastructure" Version="3.0.0" />
-  </ItemGroup>
-  <ItemGroup>
-    <RdXmlFile Include="rd.xml" />
-    <DirectPInvoke Include="mi" />
-    <NativeLibrary Include="mi.lib" Condition="$(RuntimeIdentifier.StartsWith('win'))" />
-  </ItemGroup>
-  <ItemGroup>
+    <PackageReference Include="WmiLight" Version="6.5.0" />
     <None Update="configuration.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -46,11 +37,12 @@
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="BuildTimeStamp.txt" />
-    <None Remove="BuildTimeStamp.txt" />
-  </ItemGroup>
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="echo $(SourceRevisionId) &gt; $(ProjectDir)BuildTimeStamp.txt" />
+
+  <!-- https://stackoverflow.com/a/50905092 Get Build time, use like this in code "var compileTime = new DateTime(Builtin.CompileTime, DateTimeKind.Utc);" -->
+  <Target Name="Date" BeforeTargets="BeforeBuild">
+    <WriteLinesToFile File="$(IntermediateOutputPath)gen.cs" Lines="static partial class Builtin { public static long CompileTime = $([System.DateTime]::UtcNow.Ticks) %3B }" Overwrite="true" />
   </Target>
+  <ItemGroup>
+    <Compile Include="$(IntermediateOutputPath)gen.cs" />
+  </ItemGroup>
 </Project>
