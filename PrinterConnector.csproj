@@ -49,4 +49,18 @@
   <ItemGroup>
     <Compile Include="$(IntermediateOutputPath)gen.cs" />
   </ItemGroup>
+  	<!-- https://stackoverflow.com/a/71747677 -->
+	<Target Name="SetSourceRevisionId" BeforeTargets="InitializeSourceControlInformation">
+		<Exec Command="git.exe describe --long --always --dirty --exclude='*' --abbrev=40"
+			  ConsoleToMSBuild="True" IgnoreExitCode="False">
+			<Output PropertyName="SourceRevisionId" TaskParameter="ConsoleOutput" />
+		</Exec>
+	</Target>
+	<Target Name="SetHash" AfterTargets="InitializeSourceControlInformation">
+		<ItemGroup>
+			<AssemblyAttribute Include="PrinterConnector.GitHashAttribute">
+				<_Parameter1>$(SourceRevisionId)</_Parameter1>
+			</AssemblyAttribute>
+		</ItemGroup>
+	</Target>
 </Project>

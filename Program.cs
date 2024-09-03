@@ -15,6 +15,7 @@
 
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 
 namespace PrinterConnector;
 
@@ -68,8 +69,10 @@ internal class Program
             }
         }
         var compileTime = new DateTime(Builtin.CompileTime, DateTimeKind.Utc);
+        var hash = Assembly.GetEntryAssembly()!.GetCustomAttribute<GitHashAttribute>()!.Hash;
         Logger.TeeLogMessage($"PrinterConnector, Copyright (C) {compileTime:yyyy} Bergen Kommune");
         Logger.TeeLogMessage("Build time: " + compileTime.ToString("O"));
+        Logger.TeeLogMessage("Based on git commit: " + hash);
         // Ignore warnings for unreacable code here
         // This is intended depending on the state of AllowPrivateNetworkOnly
 #pragma warning disable CS0162 // Unreachable code detected
@@ -293,5 +296,15 @@ internal class Program
             Logger.TeeLogMessage($"{hostname} resolves to a public IP and this is not allowed ({addr}).", Logging.LogSeverity.Warning);
             return false;
         }
+    }
+}
+
+[AttributeUsage(AttributeTargets.Assembly, Inherited = false, AllowMultiple = false)]
+sealed class GitHashAttribute : Attribute
+{
+    public string Hash { get; }
+    public GitHashAttribute(string hsh)
+    {
+        this.Hash = hsh;
     }
 }
