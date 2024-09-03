@@ -140,7 +140,7 @@ internal static class PrinterList
         try { Program.DetailedLog = document.GetBoolean("detailed-logging"); } catch { }
 
         TomlTable printers;
-        try { printers = document.GetSubTable("printers"); }
+        try { printers = document.GetSubTable("printer"); }
         catch
         {
             Console.WriteLine($"No printers found in {configPath}, not a valid configuration");
