@@ -22,7 +22,11 @@
     <DebugType>none</DebugType>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="WmiLight" Version="6.5.0" />
+		<PackageReference Include="Samboy063.Tomlet" Version="5.4.0" />
+		<PackageReference Include="WmiLight" Version="6.5.1" />
+		<None Update="configuration.toml">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
     <None Update="configuration.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

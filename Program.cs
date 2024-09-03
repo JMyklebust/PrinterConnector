@@ -56,11 +56,19 @@ namespace PrinterConnector
 
         static void Main(string[] args)
         {
-            string? SettingsPath = null;
+            FileInfo? settingsPath = null;
             if (args.Length > 0)
-                SettingsPath = args[0];
+            {
+                try
+                {
+                    settingsPath = new FileInfo(args[0]);
+                }
+                catch (Exception exSettingsPath)
+                {
+                }
+            }
             var compileTime = new DateTime(Builtin.CompileTime, DateTimeKind.Utc);
-            Logger.TeeLogMessage("PrinterConnector, Copyright (C) 2024 Jens-Kristian Myklebust");
+            Logger.TeeLogMessage($"PrinterConnector, Copyright (C) {compileTime:yyyy} Bergen Kommune");
             Logger.TeeLogMessage("Build time: " + compileTime.ToString("O"));
             // Ignore warnings for unreacable code here
             // This is intended depending on the state of AllowPrivateNetworkOnly
@@ -82,35 +90,90 @@ namespace PrinterConnector
             else
                 Logger.TeeLogMessage($"Computer hostname: {PrinterList.computerName}, computer IP: {PrinterList.computerIPv4}");
 
-
-            try
+            string configType;
+            if (null != settingsPath)
             {
-                if (File.Exists(SettingsPath))
+                configType = DetermineConfig(settingsPath);
+            }
+            else
+            {
+                try
                 {
-                    if (PrinterList.GetSettings(SettingsPath))
-                        Logger.TeeLogMessage($"Loaded config file '{SettingsPath}'", Logging.LogSeverity.Information);
-                    else
-                        Logger.TeeLogMessage($"Failed to load config file '{SettingsPath}'", Logging.LogSeverity.Warning);
+                    settingsPath = new FileInfo("configuration.toml");
+                    configType = DetermineConfig(settingsPath);
                 }
-                else
+                catch (Exception exSettingsPath)
                 {
-                    if (PrinterList.GetSettings())
-                        Logger.TeeLogMessage($"Loaded local configuration.xml file.", Logging.LogSeverity.Information);
-                    else
-                        Logger.TeeLogMessage($"Failed to load local configuration.xml file.", Logging.LogSeverity.Warning);
+                    try
+                    {
+                        settingsPath = new FileInfo("configuration.xml");
+                        configType = DetermineConfig(settingsPath);
+                    }
+                    catch (Exception exSettingsPath2)
+                    {
+                        configType = "notvalid";
+                    }
                 }
             }
-            catch (Exception)
+            if (configType == "notvalid")
+                Logger.TeeLogMessage($"No valid config file found, will not do anything", Logging.LogSeverity.Warning);
+            else
             {
-                Logger.TeeLogMessage("Was unable to parse config", Logging.LogSeverity.Error);
-                throw new Exception("Unable to read config");
+                try
+                {
+                    if (configType == "toml")
+                    {
+                        if (PrinterList.GetTomlConfig(settingsPath!.FullName))
+                            Logger.TeeLogMessage($"Loaded config file '{settingsPath!.FullName}'", Logging.LogSeverity.Information);
+                        else
+                            Logger.TeeLogMessage($"Failed to load config file '{settingsPath!.FullName}'", Logging.LogSeverity.Warning);
+                    }
+                    else if (configType == "xml")
+                    {
+                        if (PrinterList.GetXMLConfig(settingsPath!.FullName))
+                            Logger.TeeLogMessage($"Loaded config file '{settingsPath!.FullName}'", Logging.LogSeverity.Information);
+                        else
+                            Logger.TeeLogMessage($"Failed to load config file '{settingsPath!.FullName}'", Logging.LogSeverity.Warning);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.TeeLogMessage("Was unable to parse config", Logging.LogSeverity.Error);
+                    throw new Exception("Unable to read config");
+                }
+                ProcessList();
             }
-
-            ProcessList();
-
             Logger.TeeLogMessage("Finished.");
         }
 
+        static string DetermineConfig(FileInfo configPath)
+        {
+            if (configPath.Exists)
+            {
+                try
+                {
+                    _ = Tomlet.TomlParser.ParseFile(configPath.FullName);
+                    return "toml";
+                }
+                catch (Exception exToml)
+                {
+                    try
+                    {
+                        System.Xml.XmlDocument xmlDocument = new ();
+                        xmlDocument.Load(configPath.FullName);
+                        return "xml";
+                    }
+                    catch (Exception exXML)
+                    {
+                        return "notvalid";
+                    }
+                }
+            }
+            else
+            {
+                return "notvalid";
+            }
+        }
         static void ProcessList()
         {
             HashSet<string> connectedPrinters = CIMUtils.GetConnectedPrinters();
@@ -186,7 +249,7 @@ namespace PrinterConnector
                 }
             }
 
-            foreach (string printerDefault in PrinterList.printersToSetDefault) 
+            foreach (string printerDefault in PrinterList.printersToSetDefault)
             {
                 try
                 {
