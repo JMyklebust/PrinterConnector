@@ -15,53 +15,52 @@
 
 using System.Net;
 
-namespace PrinterConnector
+namespace PrinterConnector;
+
+public class PrinterConnectDef(string printer, string[] adgroup, string[] computers, string[] ipaddress, bool SetDefaultPrinter, int DefaultPrinterWeight)
 {
-    public class PrinterConnectDef(string printer, string[] adgroup, string[] computers, string[] ipaddress, bool SetDefaultPrinter, int DefaultPrinterWeight)
+    public readonly string Printer = printer.ToLowerInvariant();
+    public readonly string PrinterServer = printer.ToLowerInvariant().TrimStart('\\').Split('\\')[0];
+    public readonly bool SetDefaultPrinter = SetDefaultPrinter;
+    public readonly int DefaultPrinterWeight = DefaultPrinterWeight;
+    public readonly HashSet<string> Adgroup = adgroup.Select(s => s.ToLowerInvariant().Trim()).ToHashSet();
+    public readonly HashSet<string> Computers = computers.Select(s => s.ToLowerInvariant().Trim()).ToHashSet();
+    public readonly HashSet<IPAddress> IPAddresses = ProcessIPList(ipaddress);
+
+    private static readonly Dictionary<string, HashSet<IPAddress>> IPRangeCache = [];
+
+    static HashSet<IPAddress> ProcessIPList(string[] ipaddress)
     {
-        public readonly string Printer = printer.ToLowerInvariant();
-        public readonly string PrinterServer = printer.ToLowerInvariant().TrimStart('\\').Split('\\')[0];
-        public readonly bool SetDefaultPrinter = SetDefaultPrinter;
-        public readonly int DefaultPrinterWeight = DefaultPrinterWeight;
-        public readonly HashSet<string> Adgroup = adgroup.Select(s => s.ToLowerInvariant().Trim()).ToHashSet();
-        public readonly HashSet<string> Computers = computers.Select(s => s.ToLowerInvariant().Trim()).ToHashSet();
-        public readonly HashSet<IPAddress> IPAddresses = ProcessIPList(ipaddress);
-
-        private static readonly Dictionary<string, HashSet<IPAddress>> IPRangeCache = [];
-
-        static HashSet<IPAddress> ProcessIPList(string[] ipaddress)
+        HashSet<IPAddress> iPAddresses = [];
+        foreach (string ip in ipaddress.Select(s=>s.Trim()))
         {
-            HashSet<IPAddress> iPAddresses = [];
-            foreach (string ip in ipaddress.Select(s=>s.Trim()))
+            if (ip.Contains('/'))
             {
-                if (ip.Contains('/'))
+                if (!IPRangeCache.TryGetValue(ip, out HashSet<IPAddress>? value))
                 {
-                    if (!IPRangeCache.TryGetValue(ip, out HashSet<IPAddress>? value))
-                    {
-                        value = new IPHelper(ip).GetAllIP().ToHashSet();
-                        IPRangeCache.Add(ip, value);
-                    }
-                    iPAddresses.UnionWith(value);
+                    value = new IPHelper(ip).GetAllIP().ToHashSet();
+                    IPRangeCache.Add(ip, value);
                 }
-                else if (ip.Contains('-'))
+                iPAddresses.UnionWith(value);
+            }
+            else if (ip.Contains('-'))
+            {
+                if (!IPRangeCache.TryGetValue(ip, out HashSet<IPAddress>? value))
                 {
-                    if (!IPRangeCache.TryGetValue(ip, out HashSet<IPAddress>? value))
-                    {
-                        IPAddress[] splitaddress = ip.Split("-").Select(IPAddress.Parse).ToArray();
-                        value = IPHelper.GetAllIP(splitaddress[0].GetAddressBytes(), splitaddress[1].GetAddressBytes()).ToHashSet();
-                        IPRangeCache.Add(ip, value);
-                    }
-                    iPAddresses.UnionWith(value);
+                    IPAddress[] splitaddress = ip.Split("-").Select(IPAddress.Parse).ToArray();
+                    value = IPHelper.GetAllIP(splitaddress[0].GetAddressBytes(), splitaddress[1].GetAddressBytes()).ToHashSet();
+                    IPRangeCache.Add(ip, value);
                 }
-                else
+                iPAddresses.UnionWith(value);
+            }
+            else
+            {
+                if (IPAddress.TryParse(ip, out IPAddress? ipAddr))
                 {
-                    if (IPAddress.TryParse(ip, out IPAddress? ipAddr))
-                    {
-                        iPAddresses.Add(ipAddr);
-                    }
+                    iPAddresses.Add(ipAddr);
                 }
             }
-            return iPAddresses;
         }
+        return iPAddresses;
     }
 }
