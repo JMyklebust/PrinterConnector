@@ -1,0 +1,60 @@
+﻿# Main settings
+fix-missing-fqdn-names=false
+detailed-logging=true
+
+# Printer configuration
+[printer.'commonprinter']
+name='\\printserver.example.com\commonprinter'
+
+[printer.'commonprinter_default_noweight']
+name='\\printserver.example.com\commonprinter_default_noweight'
+
+[printer.'commonprinter_default']
+name='\\printserver.example.com\commonprinter_default'
+
+[printer.'conditiontest2']
+name='\\printserver.example.com\conditiontest2'
+adgroup=['domain\Domain Users']
+
+[printer.'conditiontest3']
+name='\\printserver.example.com\conditiontest3'
+computers=['computer1']
+
+[printer.'conditiontest4']
+name='\\printserver.example.com\conditiontest4'
+adgroup=['domain\Domain Users']
+computers=['computer1']
+
+[printer.'conditiontest5']
+name='\\printserver.example.com\conditiontest5'
+adgroup=['domain\Domain Users']
+computers=['computer1','computer2']
+
+[printer.'conditiontest6']
+name='\\printserver.example.com\conditiontest6'
+adgroup=['domain\Domain Users']
+computers=['computer2']
+
+[printer.'conditiontest7']
+name='\\printserver.example.com\conditiontest7'
+adgroup=['domain\noconnect']
+
+[printer.'conditiontest8']
+name='\\printserver.example.com\conditiontest8'
+adgroup=['domain\canconnect','domain\domain users']
+ipaddress=['10.226.63.12','10.226.63.10','10.226.63.11','10.226.63.13']
+
+[printer.'conditiontest9']
+name='\\printserver.example.com\conditiontest9'
+computers=['computer1','computer2','computer3','computer4']
+ipaddress=['10.0.154.0/23','10.0.155.1-10.0.155.254','10.0.155.1/23']
+
+[printer.'conditiontest10']
+name='\\printserver.example.com\conditiontest10'
+computers=['computer1','computer2','computer3','computer4']
+ipaddress=['10.0.0.55']
+
+[printer.'conditiontest11']
+name='\\nofqdn\conditiontest11'
+
+

@@ -31,11 +31,6 @@
 			<computers>computer1</computers>
 		</printerdef>
 		<printerdef>
-			<name>\\example.com\conditiontest4</name>
-			<adgroup>domain\Domain Users</adgroup>
-			<computers>computer1</computers>
-		</printerdef>
-		<printerdef>
 			<name>\\printserver.example.com\conditiontest5</name>
 			<adgroup>domain\Domain Users</adgroup>
 			<computers>computer1,computer2</computers>
