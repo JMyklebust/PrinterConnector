@@ -37,6 +37,12 @@ foreach($printer in $xmlDoc.printerconnector.printers.printerdef){
             $array = ($array | ForEach-Object {$psitem.trim()}) -join "','"
             [void]$stringBuilder.AppendLine("ipaddress=['$array']")
         }
+        elseif($info.name -eq "setdefaultprinter"){
+            [void]$stringBuilder.AppendLine("setdefaultprinter=$($info.InnerText)")
+            if($info.HasAttribute("weight")){
+                [void]$stringBuilder.AppendLine("defaultprinterweight=$($info.GetAttribute("weight"))")
+            }
+        }
     }
     [void]$stringBuilder.AppendLine("")
 }

@@ -8,9 +8,12 @@ name='\\printserver.example.com\commonprinter'
 
 [printer.'commonprinter_default_noweight']
 name='\\printserver.example.com\commonprinter_default_noweight'
+setdefaultprinter=true
 
 [printer.'commonprinter_default']
 name='\\printserver.example.com\commonprinter_default'
+setdefaultprinter=true
+defaultprinterweight=1
 
 [printer.'conditiontest2']
 name='\\printserver.example.com\conditiontest2'

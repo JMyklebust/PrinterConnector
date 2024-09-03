@@ -42,69 +42,97 @@ Then we consider the DNS lookup valid. If the IP-address does not start with eit
 The intention of this is to reduce the chance using this application as a means of connecting to a malicious printer server.
 
 ## Configuration
-The application is configured via the file `configuration.xml`.  
-**Important note!** The XML tags are case sensitive, and generally written in lowercase.
+The application can be configured with either toml or xml files.  
+Generally it's reccomended to use the toml format, and xml is considered as legacy configuration for this application.  
+Old instuctions for the xml format is here [READMEXML.md](READMEXML.md)
+
+The default configuration filename is `configuration.toml`.  
+The application can take a filepath as argument to allow you to use multiple different configurations if nessecary.  
+
 
 ### Simple configuration
-Printers are defined in the tag `<printers>` under the root tag `<printerconnector>` and a definition is defined by the element `<printerdef>` containg minimum a `<name>` element which defines the printer.
-An example of minimum configuration:
-```xml
-<?xml version="1.0" encoding="utf-8" ?>
-<printerconnector>
-	<printers>
-		<printerdef>
-			<name>\\printer.server.FQDN\myprinter</name>
-		</printerdef>
-	</printers>
-</printerconnector>
+A basic configuration can look like this:
+```toml
+# Main settings
+fix-missing-fqdn-names=false
+detailed-logging=true
+
+# Printer configuration
+[printer.'commonprinter']
+name='\\printserver.example.com\commonprinter'
 ```
-**Note!** Prefer using FQDN in the printer name.
-If you add just the hostname, the program will automatically try to append the current computer domain to the name.
+
+The absolute minimum valid configuration is this:
+```toml
+[printer.'commonprinter']
+name='\\printserver.example.com\commonprinter'
+```
+Or this:
+```toml
+printer.'commonprinter'.name='\\printserver.example.com\commonprinter'
+```
+
+Every printer added needs a toml table under the table 'printer'
+So multiple printes can be defined like this:
+```toml
+[printer.'commonprinter']
+name='\\printserver.example.com\commonprinter'
+[printer.'extraprinter']
+name='\\printserver.example.com\someotherprinter'
+```
+Or this:
+```toml
+printer.'commonprinter'.name='\\printserver.example.com\commonprinter'
+printer.'extraprinter'.name='\\printserver.example.com\someotherprinter'
+```
+It's generally recommened to keep to one syntax and not mix the two.  
+It's also reccomended to use single quotes, since the character `\` is an escape character in the toml specification.  
+Using string literals is simpler since we are working with Windows paths mainly.
+
+> **Note!** Prefer using FQDN in the printer name.  
+If you add just the hostname, the program will automatically try to append the current computer domain to the name.  
+
+
+> **Note2!** The toml table name is just for the configuration, make sure the printer "name" attribute is unique.  
+If it's not unique then the next printer with the same name will be ignored.  
+Example:
+```toml
+[printer.'commonprinter']
+name='\\printserver.example.com\samename'
+[printer.'extraprinter']
+name='\\printserver.example.com\samename'
+```
+Since both 'commonprinter' and 'extraprinter' has the same name, only 'commonprinter' will be processed.
 
 ### Advanced configuration
-More advanced configuration is also possible.
+It's possible to add filters to printer mappings for more complex setup. Generally these options are toml arrays.
+So they need to be enclosed in `[ ]`
+
+> NOTE! Using the `adgroup`, `computer` and `ipaddress` defintions will also remove the printer if the user's session no longer match the conditions. 
 
 #### Group membership
-One can restrict mapping based on group membership:
-```xml
-<?xml version="1.0" encoding="utf-8" ?>
-<printerconnector>
-	<printers>
-		<printerdef>
-			<name>\\printer.server.FQDN\myprinter</name>
-			<adgroup>domain\printergroup</adgroup>
-		</printerdef>
-	</printers>
-</printerconnector>
+One can restrict mapping based on group membership using the the `adgroup` property.
+```toml
+[printer.'commonprinter']
+name='\\printserver.example.com\commonprinter'
+adgroup=['domain\printergroup','domain\printergroup2']
 ```
 
 #### Current computer/connected Citrix client hostname
-Restrict based on the hostname of the current computer (or in case of a Citrix VDI-session, the client that is used to connect):
-```xml
-<?xml version="1.0" encoding="utf-8" ?>
-<printerconnector>
-	<printers>
-		<printerdef>
-			<name>\\printer.server.FQDN\myprinter</name>
-			<computers>hostname</computers>
-		</printerdef>
-	</printers>
-</printerconnector>
-```  
+Restrict based on the hostname of the current computer (or in case of a Citrix VDI-session, the client that is used to connect) using the `computers` property.
+```toml
+[printer.'commonprinter']
+name='\\printserver.example.com\commonprinter'
+computers=['hostname','hostname2']
+```
 
 #### Current IP/connected Citrix client IP
-It's also possible to use IP address as condition (same as with hostname, it will check the Citrix VDI-session details):
-```xml
-<?xml version="1.0" encoding="utf-8" ?>
-<printerconnector>
-	<printers>
-		<printerdef>
-			<name>\\printer.server.FQDN\myprinter</name>
-			<ipaddress>10.10.10.10</ipaddress>
-		</printerdef>
-	</printers>
-</printerconnector>
-```  
+Restrict based on the ip of the current computer (or in case of a Citrix VDI-session, the  ip of the client that is used to connect) using the `ipaddress` property.
+```toml
+[printer.'commonprinter']
+name='\\printserver.example.com\commonprinter'
+ipaddress=['10.10.10.10','10.10.20.0/24','10.10.30.1-10.10.30.20']
+```
 IP addresses can be in the formats:  
 - Single IP `10.10.10.10`
 - IP Range with CDIR notation `10.10.10.0/24`
@@ -116,60 +144,36 @@ Use a subnet calculator, or use to from-to notation instead.
 
 #### Combination
 These can also be combined:
-```xml
-<?xml version="1.0" encoding="utf-8" ?>
-<printerconnector>
-	<printers>
-		<printerdef>
-			<name>\\printer.server.FQDN\myprinter</name>
-			<adgroup>domain\printergroup</adgroup>
-			<computers>hostname</computers>
-		</printerdef>
-	</printers>
-</printerconnector>
+```toml
+[printer.'commonprinter']
+name='\\printserver.example.com\commonprinter'
+adgroup=['domain\printergroup']
+computers=['hostname']
 ```
-Note: If you combine `computername` with `ipaddress` filter the program will use it as an OR filter.  
-That means if either `computername` or `ipaddress` match, the mapping will be done.
+Note: If you combine `computers` with `ipaddress` filter the program will use it as an OR filter.  
+That means if either `computers` or `ipaddress` match, the mapping will be done.
 This also means that if neither of these match, the printer will be removed.
 
-#### Arrays in connection filters
-Both the `adgroup`, `computer` and `ipaddress` tags accept a comma (`,`) seperated list of items.
-```xml
-<?xml version="1.0" encoding="utf-8" ?>
-<printerconnector>
-	<printers>
-		<printerdef>
-			<name>\\printer.server.FQDN\myprinter</name>
-			<adgroup>domain\printergroup, domain\anothergroup</adgroup>
-			<computers>hostname, computer2</computers>
-			<ipaddress>10.10.10.10, 10.10.11.0/24</ipaddress>
-		</printerdef>
-	</printers>
-</printerconnector>
-```
-
 #### Configure default printer
-You can define a printer to be set as default using the tag ``setdefaultprinter``.  
-```xml
-<printerconnector>
-	<printers>
-		<printerdef>
-			<name>\\printer.server.FQDN\myprinter</name>
-			<setdefaultprinter weight="1">true</setdefaultprinter>
-		</printerdef>
-	</printers>
-</printerconnector>
+You can define a printer to be set as default using the property ``setdefaultprinter``.  
+```toml
+[printer.'commonprinter']
+name='\\printserver.example.com\commonprinter'
+setdefaultprinter=true
 ```
-You can mark several printers as default printer, the criteria for selection is following:
-- The printer is evaluated as a printer to connect (according to other conditions).
-- Try to set the default printer in the order they appear in the config file, unless a weight is set specificially on any of them.
-- If the ``weight`` attribute is set, then try the higher numbers first (if no weight is set then they have a default weight of 0).
-- Try to set default printers in order until one succeeds.
 
-### Important
-- Currently you can only have one `printerdef` per printername, if you add multiple entries with the same name only the fist will be used.  
-- The `adgroup`, `computer` and `ipaddress` defintions will also remove the printer if the user's session no longer match the conditions. 
-
+If multiple default printers are possible you can define priority using the weight property:
+```toml
+[printer.'commonprinter']
+name='\\printserver.example.com\commonprinter'
+setdefaultprinter=true
+defaultprinterweight=1
+```
+> Notes on priority for default printer:
+> - The printer is evaluated as a printer to connect (according to other conditions).
+> - Try to set the default printer in the order they appear in the config file, unless a weight is set specificially on any of them.
+> - If the ``defaultprinterweight`` property is set, then try the higher numbers first (if no weight is set then they have a default weight of 0).
+> - Try to set default printers in order until one succeeds.
 
 
 ## Copyright
